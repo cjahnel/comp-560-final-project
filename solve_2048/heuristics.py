@@ -8,39 +8,49 @@ SNAKE_WEIGHTS = [
     [2**0,  2**1,  2**2,  2**3],
 ]
 
-def snake(board: Board) -> int:
-    """Positional snake-pattern score only."""
+_MAX_SNAKE    = 500_000_000
+_WORST_SMOOTH = -2046 * 24
+
+W_SNAKE  = 1.0
+W_EMPTY  = 0.05
+W_SMOOTH = 0.05
+
+def snake_raw(board: Board) -> float:
     return sum(
         board.grid[r][c] * SNAKE_WEIGHTS[r][c]
         for r in range(4) for c in range(4)
     )
 
-
-def empty_cells(board: Board) -> int:
-    """Empty cell count only (scaled to be comparable with other heuristics)."""
-    return len(board.get_empty_cells()) * 10000
+def snake(board: Board) -> float:
+    return min(snake_raw(board) / _MAX_SNAKE, 1.0)
 
 
-def close_neighbors(board: Board) -> int:
-    """Smoothness: penalise large differences between adjacent tiles."""
-    grid = board.grid
+def smooth_raw(board: Board) -> float:
     penalty = 0
     for r in range(4):
         for c in range(4):
-            v = grid[r][c]
+            v = board.grid[r][c]
             if v == 0:
                 continue
-            if c + 1 < 4 and grid[r][c + 1]:
-                penalty -= abs(v - grid[r][c + 1])
-            if r + 1 < 4 and grid[r + 1][c]:
-                penalty -= abs(v - grid[r + 1][c])
+            if c + 1 < 4 and board.grid[r][c + 1]:
+                penalty -= abs(v - board.grid[r][c + 1])
+            if r + 1 < 4 and board.grid[r + 1][c]:
+                penalty -= abs(v - board.grid[r + 1][c])
     return penalty
 
+def close_neighbors(board: Board) -> float:
+    return smooth_raw(board) / abs(_WORST_SMOOTH)
 
-def combined(board: Board) -> int:
-    """All three components together."""
-    return snake(board) + empty_cells(board) + close_neighbors(board)
 
+def empty_cells(board: Board) -> float:
+    return len(board.get_empty_cells()) / 16
+
+
+def combined(board: Board) -> float:
+    s = min(snake_raw(board) / _MAX_SNAKE, 1.0)
+    e = len(board.get_empty_cells()) / 16
+    c = smooth_raw(board) / abs(_WORST_SMOOTH)
+    return W_SNAKE * s + W_EMPTY * e + W_SMOOTH * c
 
 HEURISTICS = {
     'snake': snake,
