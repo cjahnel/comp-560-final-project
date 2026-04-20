@@ -1,4 +1,6 @@
 # COMP 560 Final Project
+### Akil Dickerson, Christian Jahnel, Sang Woo Kim, Douglas Parker, and Philip Roh
+
 This repository contains our code attempting to beat 2048 with AI by using expectimax on the state tree. Each board is a unique state,
 and the player can move to the next state by moving the tiles in one of the four directions.
 After a move, there a 2 or a 4 tile gets randomly filled in in an empty space in the grid.
