@@ -1,0 +1,314 @@
+\documentclass{article}
+
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2023
+
+
+% ready for submission
+\usepackage{neurips_2023}
+
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+%     \usepackage[preprint]{neurips_2023}
+
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+%     \usepackage[final]{neurips_2023}
+
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2023}
+
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+
+
+\title{Formatting Instructions For NeurIPS 2023}
+
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+
+\author{%
+  David S.~Hippocampus\thanks{Use footnote for providing further information
+    about author (webpage, alternative address)---\emph{not} for acknowledging
+    funding agencies.} \\
+  Department of Computer Science\\
+  Cranberry-Lemon University\\
+  Pittsburgh, PA 15213 \\
+  \texttt{hippo@cs.cranberry-lemon.edu} \\
+  % examples of more authors
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \AND
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+}
+
+
+\begin{document}
+
+
+\maketitle
+
+
+\begin{abstract}
+  The abstract paragraph should be indented \nicefrac{1}{2}~inch (3~picas) on
+  both the left- and right-hand margins. Use 10~point type, with a vertical
+  spacing (leading) of 11~points.  The word \textbf{Abstract} must be centered,
+  bold, and in point size 12. Two line spaces precede the abstract. The abstract
+  must be limited to one paragraph.
+\end{abstract}
+
+\section{Introduction}
+
+This report examines the application of the Expectimax algorithm to the game 2048 as a representative example
+of decision-making under uncertainty. Unlike adversarial environments, 2048 combines deterministic player actions
+with stochastic outcomes through random tile generation. This structure makes Expectimax more suitable than Minimax,
+as it evaluates decisions based on expected outcomes rather than worst-case scenarios. Additionally, the game
+requires strategic planning, which can be effectively approximated using heuristic evaluation within a depth-limited
+search. Therefore, 2048 provides a concise case for analyzing Expectimax in a probabilistic setting.
+
+\subsection*{What is the Expectimax algorithm?}
+
+The Expectimax algorithm is a decision-making method designed for environments involving both deterministic choices
+and probabilistic events. It extends Minimax by introducing chance nodes, which represent random outcomes and compute
+expected values based on their probabilities.
+\\
+\\
+In 2048, player moves are modeled as Max nodes, while random tile generation (2 with 90\% probability and 4 with 10\%) is represented as chance nodes. The algorithm explores future states up to a fixed depth, selecting moves that maximize expected outcomes. Due to computational constraints, a heuristic evaluation function (e.g., snake pattern, empty tiles, smoothness) is used to estimate non-terminal states. This combination enables efficient decision-making in a stochastic environment.
+
+
+\section{Method}
+
+
+Please read the instructions below carefully and follow them faithfully. \textbf{Important:} This year the checklist will be submitted separately from the main paper in OpenReview, please review it well ahead of the submission deadline: \url{https://neurips.cc/public/guides/PaperChecklist}.
+
+
+\subsection{Implementation}
+
+\subsubsection{Board State and Transitions}
+
+Each state of 2048 game is represented as a $4 \times 4$ board, where each tile contains a number $2^k$ with
+non-negative $k$. A value of 0 denotes an empty tile. At each step, the agent chooses one of four actions:
+left, right, up, or down. After each move, a new tile is added to a randomly selected empty cell.
+The tile value is 2 with probability 0.9 and 4 with probability 0.1. When two tiles of value $x$ are merged,
+they produce a tile of value $2x$, and the score is increased by $2x$. The total game score is accumulated
+as the sum of all merge operations. A state is considered terminal when no valid moves remain.
+
+\subsubsection{Expectimax Search}
+
+To handle the stochastic nature of the game, we employ the Expectimax Search algorithm to select actions.
+The game is modeled as a search tree consisting of two types of nodes: max nodes and chance nodes.
+\\
+\\
+Max nodes correspond to the agent's decision points. From a given state, the agent considers all valid moves
+and selects the action that maximizes the expected value of future states. Chance nodes represent the generation
+of new tiles. From a chance node, all possible tile placements are considered, each weighted by its probability.
+The heuristic value of a chance node is a weighted mean of heuristics of all its children nodes.
+\\
+\\
+Formally, the heuristic of a node is calculated recursively. At a max node, the heuristic is the maximum over
+its children where $s'$ is the successor state after applying action $a$.
+
+$$h(s) = \max_{a \in A(s)} h(s')$$
+
+At a chance node, the heuristic value is computed as the expected value over all possible outcomes.
+
+$$h(s) = \sum_{s'} P(s'|s) \cdot h(s')$$
+
+Due to the exponential growth of the search tree, we impose a depth limit on the Expectimax search.
+When the maximum depth is reached or no further moves are available, the board state is evaluated directly
+using the heuristic function $h(s)$.
+
+\subsection{Heuristic Function Design}
+
+In order to effectively evaluate non-terminal states in the Expectimax search algorithm for the 2048 games,
+we designed heuristic functions that approximate the desirability of a current state. 
+\\
+\\
+We represent a board state as a $4 \times 4$ grid $S$, where each tile value is denoted as $s_{i,j}$.
+The overall heuristic is composed of three components: snake structure, empty cells, and smoothness, each capturing
+complementary properties of a desirable board.
+
+\subsubsection{Snake Heuristic}
+
+$$H_{snake}(S) = \sum_{i=1}^{4} \sum_{j=1}^{4} w_{i,j} \cdot s_{i,j}$$
+
+The snake heuristic evaluates whether high-value tiles are arranged in a structured, monotonic order.
+This is implemented using a predefined weight matrix $W$, which assigns larger weights to positions along a snake
+path starting from a corner of the board. As a result, it enforces a global ordering and facilitates future merge
+operations.
+
+\subsubsection{Empty Cells Heuristic}
+
+$$H_{empty}(S) = 1000 \cdot \sum_{i, j} 1(s_{i,j} = 0)$$
+
+The empty cells heuristic measures the number of unoccupied positions on the board. A higher number of empty cells
+implies more possible future moves and a lower risk of reaching a terminal state. The scaling factor is included to
+make this term more comparable in magnitude to the other heuristic values used in evaluation.
+
+\subsubsection{Smoothness Heuristic}
+
+$$H_{smooth}(S) = -\sum_{(i,j)} \sum_{(k,l)\in N(i,j)} |s_{i,j} - s_{k,l}|$$
+
+The smoothness heuristic measures the closeness of magnitude between adjacent tiles on the grid.
+It penalizes large differences in value between neighboring tiles, assigning higher scores to grids where
+neighboring tiles have similar magnitudes. In the implementation, the smoothness term is computed only when 
+$s_{i, j} \neq 0$, and differences are measured only with the right and lower neighboring tiles.
+
+\subsubsection{Combined Heuristic}
+
+$$H(S) = H_{snake}(S) + H_{empty}(S) + H_{smooth}(S)$$
+
+The combined heuristic is defined as the sum of the three components. An additive formulation is used to ensure
+that all three criteria are considered simultaneously. Unlike multiplication or max-based approaches, summation
+allows each component to contribute proportionally and enables meaningful trade-offs between them when evaluating
+a board state.
+
+\section{Experiment}
+
+\subsection{Variables and Results}
+
+\begin{itemize}
+  \item Controlled Variables
+  \begin{itemize}
+    \item Game environment ($4\times4$ board size, game rules, and termination condition)
+    \item Tile generation mechanism (probability distribution: 2 with 90\%, 4 with 10\%)
+    \item Decision-making framework (Expectimax algorithm structure, including Max and Chance nodes)
+    \item Action space (four directional moves: up, down, left, right)
+    \item Number of trials per configuration (25 runs)
+  \end{itemize}
+  \item Independent Variables
+  \begin{itemize}
+    \item Heuristic function (snake, empty, smooth, combined)
+    \item Search depth (1, 2, 3)
+  \end{itemize}
+  \item Dependent Variables
+  \begin{itemize}
+    \item Average score (Avg)
+    \item Maximum score (Max)
+    \item Minimum score (Min)
+    \item Standard deviation (Std)
+    \item Maximum tile achieved (MaxTile)
+    \item Success rates ($\ge1024$, $\ge2048$)
+  \end{itemize}
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llrrrrrrr}
+\toprule
+Heuristic & Depth & Avg & Max & Min & Std & Max Tile & 2048 Rate & 1024 Rate \\
+\midrule
+
+snake & 1 & 3299 & 10440 & 756 & 1948 & 1024 & 0/25 & 1/25 \\
+snake & 2 & 3208 & 7140 & 740 & 1562 & 512 & 0/25 & 0/25 \\
+snake & 3 & 35599 & 111280 & 3156 & 22195 & 8192 & 20/25 & 22/25 \\
+
+\midrule
+empty & 1 & 2990 & 6724 & 788 & 1356 & 512 & 0/25 & 0/25 \\
+empty & 2 & 2990 & 6724 & 788 & 1356 & 512 & 0/25 & 0/25 \\
+empty & 3 & 9075 & 15568 & 3352 & 3792 & 1024 & 0/25 & 10/25 \\
+
+\midrule
+smooth & 1 & 1974 & 4724 & 552 & 987 & 512 & 0/25 & 0/25 \\
+smooth & 2 & 2579 & 7012 & 660 & 1502 & 512 & 0/25 & 0/25 \\
+smooth & 3 & 6633 & 15980 & 1740 & 3909 & 1024 & 0/25 & 5/25 \\
+
+\midrule
+combined & 1 & 4570 & 9084 & 1992 & 2030 & 512 & 0/25 & 0/25 \\
+combined & 2 & 6296 & 14368 & 1848 & 3170 & 1024 & 0/25 & 3/25 \\
+combined & 3 & 18220 & 58688 & 5448 & 12095 & 4096 & 7/25 & 19/25 \\
+
+\bottomrule
+\end{tabular}
+\caption{Performance of Expectimax with Different Heuristics and Depths (25 Trials each)}
+\end{table}
+
+\subsection{Comparison with Human Performance}
+
+To evaluate the performance of our model, we compare its gameplay results with those of human players.
+Human scores were collected from 12 gameplay runs. We used combined heuristic with depth 3 for comparison.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Model & Avg Score & Max Score & Max Tile & $\geq$2048 \\
+\midrule
+Human & 6303 & 16944 & 1024 & 0\% \\
+Agent (snake depth 3) & 35599 & 111280 & 8192 & 80\% \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of human performance and agent performance}
+\end{table}
+
+The model significantly outperforms human players in both score and maximum tile achieved.
+While human players did not reach 2048, the model achieved 2048 20 out of 25 times, even with limited depth of 3.
+
+\section{Discussion}
+
+\subsection*{Analysis}
+
+The results from Figure 1 show that search depth has the greatest impact on Expectimax performance.
+Increasing the depth from 1 to 3 significantly improved average scores across all heuristics
+(e.g., snake: $3,299 \rightarrow 35,599$), highlighting the importance of deeper lookahead.
+\\
+\\
+Heuristic choice had limited effect at shallow depths but became critical at depth 3.
+The snake heuristic achieved the best performance, with the highest average score (35,599) and the highest success 
+rate in reaching 2048 (20/25).
+\\
+\\
+The snake heuristic proved to be the dominant contributor to agent performance. When tuning the combined heuristic,
+reducing the weight of the empty cell and smoothness components while increasing the weight of the snake component
+consistently improved results, suggesting that the positional strategy encoded by the snake pattern is the most
+valuable signal for 2048 play. This is further supported by the fact that snake alone outperforms all other individual
+heuristics and the combined heuristic on average score at every depth tested. However, the combined heuristic
+demonstrated greater robustness at depth 3, achieving a lower standard deviation (12,095 vs 22,195) and a higher
+minimum score (5,448 vs 3,156) compared to snake alone. This suggests that while the empty cell and smoothness
+components do not improve peak performance, they act as stabilisers, reducing the frequency of poor outcomes and
+producing more consistent play across games. The snake heuristic alone is therefore sufficient for maximising average
+performance, but the combined heuristic may be preferable in settings where consistency is valued over peak score.
+
+\subsection*{Improvement}
+
+Reinforcement learning agents learn strategy through millions of self-play games, allowing them to discover
+patterns and long-term planning that a hand-crafted heuristic like ours cannot capture. Rather than relying on
+a human-designed evaluation function, they develop an intuition for what makes a board good purely from experience.
+This makes them far less dependent on design choices like heuristic weighting or search depth, which as our results
+show are significant bottlenecks for expectimax. 
+\end{document}
