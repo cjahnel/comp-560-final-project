@@ -7,7 +7,7 @@
 
 
 % ready for submission
-\usepackage{neurips_2023}
+% \usepackage{neurips_2023}
 
 
 % to compile a preprint version, e.g., for submission to arXiv, add add the
@@ -16,7 +16,7 @@
 
 
 % to compile a camera-ready version, add the [final] option, e.g.:
-%     \usepackage[final]{neurips_2023}
+\usepackage[final]{neurips_2023}
 
 
 % to avoid loading the natbib package, add option nonatbib:
@@ -32,9 +32,10 @@
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
 \usepackage{xcolor}         % colors
+\usepackage{amsmath}        % math
 
 
-\title{COMP 560 Final Report\\Beating 2048 with Expectimax}
+\title{Beating 2048 with Expectimax}
 
 
 % The \author macro works with any number of authors. There are two commands
@@ -46,35 +47,10 @@
 % \AND instead of \And before the third author name.
 
 
-\author{%
-  David S.~Hippocampus\thanks{Use footnote for providing further information
-    about author (webpage, alternative address)---\emph{not} for acknowledging
-    funding agencies.} \\
-  Department of Computer Science\\
-  Cranberry-Lemon University\\
-  Pittsburgh, PA 15213 \\
-  \texttt{hippo@cs.cranberry-lemon.edu} \\
-  % examples of more authors
-  % \And
-  % Coauthor \\
-  % Affiliation \\
-  % Address \\
-  % \texttt{email} \\
-  % \AND
-  % Coauthor \\
-  % Affiliation \\
-  % Address \\
-  % \texttt{email} \\
-  % \And
-  % Coauthor \\
-  % Affiliation \\
-  % Address \\
-  % \texttt{email} \\
-  % \And
-  % Coauthor \\
-  % Affiliation \\
-  % Address \\
-  % \texttt{email} \\
+\author{
+  Akil Dickerson, \space Christian Jahnel, \space Sang Woo Kim, \space Douglas Parker, \space Philip Roh\\
+  UNC Chapel-Hill\\
+  COMP 560
 }
 
 
@@ -85,11 +61,11 @@
 
 
 \begin{abstract}
-  The abstract paragraph should be indented \nicefrac{1}{2}~inch (3~picas) on
-  both the left- and right-hand margins. Use 10~point type, with a vertical
-  spacing (leading) of 11~points.  The word \textbf{Abstract} must be centered,
-  bold, and in point size 12. Two line spaces precede the abstract. The abstract
-  must be limited to one paragraph.
+  We apply the Expectimax algorithm to 2048, a stochastic single-player game with both deterministic actions and
+  random tile generation. We implement a depth-limited search with heuristic evaluations based on snake, empty-cell,
+  and smoothness features. Experiments show that deeper search improves performance, and the combined heuristic
+  yields the best results. The proposed model significantly outperforms human gameplay, highlighting the importance
+  of search depth and heuristic design.
 \end{abstract}
 
 \section{Introduction}
@@ -154,49 +130,30 @@ When the maximum depth is reached or no further moves are available, the board s
 using the heuristic function $h(s)$.
 
 \subsection{Heuristic Function Design}
-
-In order to effectively evaluate non-terminal states in the Expectimax search algorithm for the 2048 games,
-we designed heuristic functions that approximate the desirability of a current state. 
-\\
-\\
-We represent a board state as a $4 \times 4$ grid $S$, where each tile value is denoted as $s_{i,j}$.
-The overall heuristic is composed of three components: snake structure, empty cells, and smoothness, each capturing
-complementary properties of a desirable board.
+We designed heuristic functions to evaluate non-terminal board states, where each tile value is denoted $s_{i,j}$.
+All three components are normalised to a comparable scale before summation to prevent any single term from dominating.
 
 \subsubsection{Snake Heuristic}
-
-$$H_{snake}(S) = \sum_{i=1}^{4} \sum_{j=1}^{4} w_{i,j} \cdot s_{i,j}$$
-
-The snake heuristic evaluates whether high-value tiles are arranged in a structured, monotonic order.
-This is implemented using a predefined weight matrix $W$, which assigns larger weights to positions along a snake
-path starting from a corner of the board. As a result, it enforces a global ordering and facilitates future merge
-operations.
+$$H_{snake}(S) = \min\!\left(\frac{\sum_{i=1}^{4} \sum_{j=1}^{4} w_{i,j} \cdot s_{i,j}}{500{,}000{,}000},\ 1.0\right)$$
+Each cell is multiplied by a predefined weight $w_{i,j}$ following a snake path from the top-left corner,
+rewarding boards where high-value tiles are concentrated in a corner. The raw score is normalised by a
+realistic upper bound and clamped to 1.0.
 
 \subsubsection{Empty Cells Heuristic}
-
-$$H_{empty}(S) = 1000 \cdot \sum_{i, j} 1(s_{i,j} = 0)$$
-
-The empty cells heuristic measures the number of unoccupied positions on the board. A higher number of empty cells
-implies more possible future moves and a lower risk of reaching a terminal state. The scaling factor is included to
-make this term more comparable in magnitude to the other heuristic values used in evaluation.
+$$H_{empty}(S) = \frac{\sum_{i,j} \mathbf{1}(s_{i,j} = 0)}{16}$$
+Measures the proportion of unoccupied cells, naturally bounded in $[0, 1]$. Empty cells serve as a direct
+proxy for survival, as a full board with no valid merges is terminal.
 
 \subsubsection{Smoothness Heuristic}
-
-$$H_{smooth}(S) = -\sum_{(i,j)} \sum_{(k,l)\in N(i,j)} |s_{i,j} - s_{k,l}|$$
-
-The smoothness heuristic measures the closeness of magnitude between adjacent tiles on the grid.
-It penalizes large differences in value between neighboring tiles, assigning higher scores to grids where
-neighboring tiles have similar magnitudes. In the implementation, the smoothness term is computed only when 
-$s_{i, j} \neq 0$, and differences are measured only with the right and lower neighboring tiles.
+$$H_{smooth}(S) = \frac{-\displaystyle\sum_{\substack{(i,j) \\ s_{i,j} > 0}} \sum_{(k,l)\in N(i,j)} |s_{i,j} - s_{k,l}|}{49{,}104}$$
+Penalises large differences between adjacent occupied tiles, bounded in $[-1, 0]$. Differences are measured
+only with the right and lower neighbours to avoid double-counting.
 
 \subsubsection{Combined Heuristic}
-
-$$H(S) = H_{snake}(S) + H_{empty}(S) + H_{smooth}(S)$$
-
-The combined heuristic is defined as the sum of the three components. An additive formulation is used to ensure
-that all three criteria are considered simultaneously. Unlike multiplication or max-based approaches, summation
-allows each component to contribute proportionally and enables meaningful trade-offs between them when evaluating
-a board state.
+$$H(S) = W_s \cdot H_{snake}(S) + W_e \cdot H_{empty}(S) + W_c \cdot H_{smooth}(S)$$
+The weighted sum of all three normalised components. Normalisation is essential — without it, the snake score
+dominates by several orders of magnitude. Experimentally, increasing $W_s$ relative to $W_e$ and $W_c$
+improved performance, consistent with snake being the strongest individual heuristic.
 
 \section{Experiment}
 
@@ -278,6 +235,8 @@ Agent (snake depth 3) & 35599 & 111280 & 8192 & 80\% \\
 
 The model significantly outperforms human players in both score and maximum tile achieved.
 While human players did not reach 2048, the model achieved 2048 20 out of 25 times, even with limited depth of 3.
+
+\pagebreak
 
 \section{Discussion}
 
