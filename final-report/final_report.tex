@@ -77,7 +77,7 @@ as it evaluates decisions based on expected outcomes rather than worst-case scen
 requires strategic planning, which can be effectively approximated using heuristic evaluation within a depth-limited
 search. Therefore, 2048 provides a concise case for analyzing Expectimax in a probabilistic setting.
 
-\subsection*{What is the Expectimax algorithm?}
+\subsection{What is the Expectimax algorithm?}
 
 The Expectimax algorithm is a decision-making method designed for environments involving both deterministic choices
 and probabilistic events. It extends Minimax by introducing chance nodes, which represent random outcomes and compute
@@ -218,7 +218,7 @@ combined & 3 & 18220 & 58688 & 5448 & 12095 & 4096 & 7/25 & 19/25 \\
 \subsection{Comparison with Human Performance}
 
 To evaluate the performance of our model, we compare its gameplay results with those of human players.
-Human scores were collected from 12 gameplay runs. We used combined heuristic with depth 3 for comparison.
+Human scores were collected from 12 gameplay runs. We used snake heuristic with depth 3 for comparison.
 
 \begin{table}[h]
 \centering
@@ -240,7 +240,7 @@ While human players did not reach 2048, the model achieved 2048 20 out of 25 tim
 
 \section{Discussion}
 
-\subsection*{Analysis}
+\subsection{Analysis}
 
 The results from Figure 1 show that search depth has the greatest impact on Expectimax performance.
 Increasing the depth from 1 to 3 significantly improved average scores across all heuristics
@@ -263,7 +263,7 @@ components do not improve peak performance, they act as stabilisers, reducing th
 producing more consistent play across games. The snake heuristic alone is therefore sufficient for maximising average
 performance, but the combined heuristic may be preferable in settings where consistency is valued over peak score.
 
-\subsection*{Improvement}
+\subsection{Improvement}
 
 Reinforcement learning agents learn strategy through millions of self-play games, allowing them to discover
 patterns and long-term planning that a hand-crafted heuristic like ours cannot capture. Rather than relying on
